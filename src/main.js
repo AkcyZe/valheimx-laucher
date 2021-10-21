@@ -1,24 +1,23 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const path = require("path");
-const fs = require('fs')
-const isAdmin = require('is-admin');
-const exec = require('child_process').execFile;
-const glob = require("glob");
-const crypto = require('crypto');
 const { download } = require('electron-dl');
 const { autoUpdater } = require('electron-updater');
 
-require('electron-reload')(`${__dirname}/dist`, {
-    electron: path.join(__dirname, 'node_modules', '.bin', 'electron.cmd')
-});
-
+const path = require("path");
+const fs = require('fs')
+const isAdmin = require('is-admin');
+const execFile = require('child_process').execFile;
+const glob = require("glob");
+const crypto = require('crypto');
 const ps = require('ps-node');
+
+require('electron-reloader')(module);
 
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-let browserWindow
-let isDevBuild = true;
-let rootPath = isDevBuild ? __dirname : path.join(app.getPath("exe"), '../');
+const isDevBuild = false;
+const rootPath = isDevBuild ? __dirname : path.join(app.getPath("exe"), '../');
+
+let browserWindow;
 let isGameStarted = false;
 
 function createWindow() {
@@ -38,48 +37,53 @@ function createWindow() {
         browserWindow.webContents.openDevTools();
     }
 
-    browserWindow.loadFile(path.join(__dirname, '/dist/index.html'));
-
     browserWindow.on('closed', () => {
         browserWindow = null
     })
 
     browserWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify();
+        autoUpdater.checkForUpdatesAndNotify().then((result) => {
+            if (result) {
+                console.log(JSON.stringify(result.updateInfo))
+            } else {
+                console.log("Update not found");
+            }
+        });
+    });
+
+    browserWindow.loadFile(path.join(__dirname, '../dist/index.html')).then(() => {
+        console.log("Index loaded.")
     });
 }
 
+app.commandLine.appendSwitch("disable-http-cache");
+app.whenReady().then(createWindow)
+
+app.on('window-all-closed', app.quit);
+ipcMain.on('close', app.quit);
+
+/**
+ * Auto update
+ */
 autoUpdater.on('update-available', () => {
+    console.log("Update available");
+
     browserWindow.webContents.send('update_available');
 });
 autoUpdater.on('update-downloaded', () => {
+    console.log("Update donwloaded");
+
     browserWindow.webContents.send('update_downloaded');
 });
 
+if (isDevBuild) {
+    setInterval(() => {
+        autoUpdater.checkForUpdates();
+    }, 2000);
+}
+
 ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
-});
-
-app.commandLine.appendSwitch("disable-http-cache");
-
-app.whenReady().then(() => {
-    createWindow();
-});
-
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
-})
-
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-})
-
-ipcMain.on('close', () => {
-    app.quit();
 });
 
 /*
@@ -145,6 +149,9 @@ ipcMain.handle('delete-file', async (e, serverName, path) => {
     });
 });
 
+/*
+* Delete all files
+* */
 ipcMain.handle('delete-all-file', async (e, serverName) => {
    return new Promise((resolve, reject) => {
        try {
@@ -203,7 +210,7 @@ ipcMain.handle('startGame', (event, params) => {
 
             isGameStarted = true;
 
-            exec(url, params.launchParams, () => { });
+            execFile(url, params.launchParams, () => { });
 
             resolve();
         } catch (error) {
