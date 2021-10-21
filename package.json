@@ -64,6 +64,14 @@
         "directories": {
             "output": "build"
         },
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "AkcyZe",
+                "url": "https://github.com/AkcyZe/valheimx-laucher/releases",
+                "token": "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"
+            }
+        ],
         "win": {
             "target": "nsis",
             "requestedExecutionLevel": "requireAdministrator"
