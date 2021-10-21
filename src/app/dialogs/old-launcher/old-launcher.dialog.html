@@ -1,5 +1,5 @@
-<h1 mat-dialog-title>Ланучер устарел</h1>
-<div mat-dialog-content>Установите новую версию лаунчера.</div>
+<h1 mat-dialog-title>Программа обновления</h1>
+<div mat-dialog-content>{{ data.description }}</div>
 <div mat-dialog-actions>
-    <button mat-raised-button color="accent" (click)="close()">Установить</button>
+    <button mat-raised-button color="accent" (click)="close()">{{ data.action }}</button>
 </div>

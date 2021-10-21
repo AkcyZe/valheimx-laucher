@@ -1,7 +1,7 @@
 {
     "name": "ValheimX",
-    "version": "2.0.3",
-    "main": "src/main.js",
+    "version": "2.0.4",
+    "main": "main.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/AkcyZe/valheimx-laucher.git"
@@ -68,8 +68,7 @@
             {
                 "provider": "github",
                 "owner": "AkcyZe",
-                "url": "https://github.com/AkcyZe/valheimx-laucher/releases",
-                "token": "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"
+                "url": "https://github.com/AkcyZe/valheimx-laucher/releases"
             }
         ],
         "win": {

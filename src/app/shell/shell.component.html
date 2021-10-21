@@ -6,7 +6,7 @@
         </button>
     </div>
 </div>
-<div class="content">
+<div class="content" *ngIf="settingsService">
     <div class="project-description">
         <div class="about-us">
             <span class="title">{{ settingsService.settings.ProjectName }}</span>

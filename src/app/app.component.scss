@@ -5,7 +5,14 @@
 
 app-shell {
     background-color: black;
+}
 
+.version {
+    position: absolute;
+    z-index: 999;
+    color: black;
+    left: 12px;
+    bottom: 0;
 }
 
 .logo {

@@ -20,6 +20,9 @@ const rootPath = isDevBuild ? __dirname : path.join(app.getPath("exe"), '../');
 let browserWindow;
 let isGameStarted = false;
 
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+
 function createWindow() {
     browserWindow = new BrowserWindow({
         width: 1040,
@@ -41,17 +44,17 @@ function createWindow() {
         browserWindow = null
     })
 
-    browserWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify().then((result) => {
-            if (result) {
-                console.log(JSON.stringify(result.updateInfo))
-            } else {
-                console.log("Update not found");
-            }
-        });
+    autoUpdater.checkForUpdatesAndNotify().then((result) => {
+        if (result) {
+            browserWindow.webContents.send('log', JSON.stringify(result.updateInfo));
+        } else {
+            browserWindow.webContents.send('log', "Update not found.");
+        }
+    }, error => {
+        browserWindow.webContents.send('error', error);
     });
 
-    browserWindow.loadFile(path.join(__dirname, '../dist/index.html')).then(() => {
+    browserWindow.loadFile(path.join(__dirname, '/dist/index.html')).then(() => {
         console.log("Index loaded.")
     });
 }
@@ -64,25 +67,9 @@ ipcMain.on('close', app.quit);
 
 /**
  * Auto update
- */
-autoUpdater.on('update-available', () => {
-    console.log("Update available");
+//  */
 
-    browserWindow.webContents.send('update_available');
-});
 autoUpdater.on('update-downloaded', () => {
-    console.log("Update donwloaded");
-
-    browserWindow.webContents.send('update_downloaded');
-});
-
-if (isDevBuild) {
-    setInterval(() => {
-        autoUpdater.checkForUpdates();
-    }, 2000);
-}
-
-ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
 });
 
@@ -225,6 +212,10 @@ ipcMain.handle('isProcessRunning', (event, params) => {
             resolve(status);
         })
     });
+});
+
+ipcMain.on('get-version', (e) => {
+    browserWindow.webContents.send('version', autoUpdater.currentVersion);
 });
 
 ipcMain.on('openGameFolder', (e, serverName) => {

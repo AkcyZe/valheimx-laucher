@@ -12,6 +12,8 @@ export class DialogService {
 
     showErrorDialog(message: string, critical?: string): Promise<void> {
         return new Promise<void>((resolve) => {
+            this._dialog.closeAll();
+
             this._dialog.open(ErrorDialogComponent, {
                 data: {
                     Title: 'Ошибка',
@@ -26,6 +28,8 @@ export class DialogService {
 
     openDialog<T>(component: ComponentType<T>, data?: any) {
         return new Promise<void>((resolve) => {
+            this._dialog.closeAll();
+
             this._dialog.open(component, {
                 data: data
             }).afterClosed().subscribe(() => {
