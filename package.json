@@ -2,15 +2,15 @@
     "name": "ValheimX",
     "version": "2.0.0",
     "main": "main.js",
+    "repository": {
+        "type" : "git",
+        "url" : "https://github.com/AkcyZe/valheimx-laucher.git"
+    },
     "scripts": {
         "start": "ng build --watch",
         "electron": "electron .",
         "build": "electron-builder",
-        "publish": "electron-builder build --win --publish always"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/AkcyZe/valheimx-laucher"
+        "deploy": "electron-builder build --win --publish always"
     },
     "private": true,
     "dependencies": {
@@ -64,13 +64,6 @@
         "directories": {
             "output": "build"
         },
-        "publish": [
-            {
-                "provider": "github",
-                "url": "https://github.com/AkcyZe/valheimx-laucher",
-                "token": "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"
-            }
-        ],
         "win": {
             "target": "nsis",
             "requestedExecutionLevel": "requireAdministrator"
