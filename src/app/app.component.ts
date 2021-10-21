@@ -25,6 +25,20 @@ export class AppComponent implements OnInit {
     }
 
     async ngOnInit() {
+        this._electronService.ipcRenderer.on('update_available', (event) => {
+            this._electronService.ipcRenderer.removeAllListeners('update_available');
+
+            this._dialogService.showErrorDialog("Update available");
+        });
+
+        this._electronService.ipcRenderer.on('update_downloaded', (event) => {
+            this._electronService.ipcRenderer.removeAllListeners("update_downloaded")
+
+            this._dialogService.showErrorDialog("Update Downloaded").then(() => {
+                this._electronService.ipcRenderer.send('restart_app');
+            });
+        });
+
         try {
             this._gameService.checkAdminRights().then((result) => {
                 if (!result) {

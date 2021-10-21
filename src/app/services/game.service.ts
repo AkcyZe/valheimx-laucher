@@ -61,14 +61,6 @@ export class GameService {
         this._electronService.ipcRenderer.on('download-completed', (event) => {
             this.downloadCompletedSubject.next();
         });
-
-        this._electronService.ipcRenderer.on('update_available', (event) => {
-            console.log("Update Available")
-        });
-
-        this._electronService.ipcRenderer.on('update_downloaded', (event) => {
-            console.log("Update Downloaded")
-        });
     }
 
     createGameFolder() {
