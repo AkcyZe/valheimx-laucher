@@ -17,7 +17,7 @@ const ps = require('ps-node');
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let browserWindow
-let isDevBuild = false;
+let isDevBuild = true;
 let rootPath = isDevBuild ? __dirname : path.join(app.getPath("exe"), '../');
 let isGameStarted = false;
 
