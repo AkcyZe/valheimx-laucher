@@ -1,0 +1,13 @@
+.mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+
+    span {
+        width: 500px;
+        margin-bottom: 16px;
+    }
+}
+
+.mat-dialog-actions {
+    justify-content: flex-end;
+}

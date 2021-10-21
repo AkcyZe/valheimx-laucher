@@ -1,0 +1,389 @@
+:host {
+    width: 100%;
+    height: 100%;
+}
+
+app-shell {
+    background-color: black;
+
+}
+
+.logo {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+
+    .snake {
+        animation-name: logoAnimation;
+        animation-duration: 2s;
+        animation-iteration-count:infinite;
+    }
+
+    .head {
+        position: absolute;
+        height: 120px;
+    }
+}
+
+.root {
+    position: relative;
+
+    img {
+        pointer-events: none;
+        user-select: none;
+    }
+
+    > mat-spinner {
+        margin: auto;
+    }
+
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    width: 100%;
+    height: 100%;
+
+    > img {
+        z-index: -1;
+        position: absolute;
+
+        width: 100%;
+
+        background-size: 100% 100%;
+    }
+
+    .devMode {
+        width: 32px;
+        height: 32px;
+        position: absolute;
+        top: 64px;
+        z-index: 10;
+    }
+
+    .loading {
+        margin: auto;
+    }
+
+    .header {
+        position: relative;
+
+        display: flex;
+        align-items: center;
+
+        width: 100%;
+        height: 60px;
+
+        background: black;
+        box-sizing: border-box;
+
+        .drag-and-drop {
+            width: 100%;
+            height: 100%;
+            -webkit-app-region: drag;
+        }
+
+        .header-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 0 16px;
+        }
+
+        button {
+            color: white;
+        }
+    }
+
+    .content {
+        display: flex;
+        width: 100%;
+        height: 100%;
+
+        background-size: 100% 100%;
+
+        transition: background-image 1s ease-in-out;
+
+        .invalid-launcher-version {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background: rgb(0 0 0 / 0.5);
+
+            > span {
+                color: white;
+                font-size: 18px;
+                margin-bottom: 16px;
+                width: 180px;
+                text-align: center;
+            }
+        }
+
+        img.frame {
+            position: absolute;
+
+            width: 100%;
+            height: 100px;
+        }
+
+        .side {
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+
+            &.left {
+                align-items: center;
+                justify-content: center;
+
+                min-width: 300px;
+                height: 100%;
+
+                margin-left: 48px;
+
+                background: rgb(0 0 0 / 0.5);
+
+                .logo {
+                    position: absolute;
+                    top: -56px;
+                    width: 200px;
+                }
+
+                .server-selection {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+
+                    box-sizing: border-box;
+
+                    width: 100%;
+                    padding: 16px 32px;
+
+                    background: white;
+
+                    mat-form-field {
+                        width: 100%;
+                    }
+
+                    .mat-raised-button {
+                        width: 100%;
+                    }
+
+                    .no-admin-rights {
+                        text-align: center;
+                        color: #ff6a00;
+                        font-size: 16px;
+                        margin-top: 16px;
+                    }
+
+                    .play-wrapper {
+                        display: flex;
+                        width: 100%;
+
+                        .mat-raised-button {
+                            width: 100%;
+                            margin-right: 16px;
+                        }
+                    }
+                }
+
+                .game-installing {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+
+                .loading {
+                    position: absolute;
+
+                    background-color: white;
+                    padding-top: 16px;
+                    border-radius: 8px;
+
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    align-items: center;
+                    width: 100%;
+                    bottom: 0;
+
+                    > mat-spinner {
+                        position: absolute;;
+                    }
+
+                    span {
+                        font-size: 16px;
+                        margin-bottom: 8px;
+                    }
+
+                    mat-progress-bar {
+                        height: 16px;
+                    }
+                }
+
+                .installing-error {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    background: white;
+                    padding: 16px 8px;
+                    box-sizing: border-box;
+                    width: 100%;
+
+                    .title {
+                        color: red;
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+
+                    .description {
+                        margin: 16px 0;
+                        color: red;
+                        text-align: center;
+                    }
+                }
+                }
+            }
+
+            &.right {
+                width: 100%;
+                height: 100%;
+
+                padding: 16px 16px 0 16px;
+
+                box-sizing: border-box;
+
+                .news-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    background: rgba(0, 0, 0, 0.5);
+                    border-radius: 10px;
+                    max-height: 320px;
+                    padding: 16px 8px;
+
+                    .news {
+                        color: white;
+                        margin-bottom: 16px;
+
+                        .title {
+                            font-weight: bold;
+                            font-size: 20px;
+                            margin-bottom: 16px;
+                            border-bottom: solid 1px orange;
+                            padding-bottom: 8px;
+                        }
+                    }
+                }
+
+                .tracker {
+                    height: 80px;
+                    width: 500px;
+                    border: 0;
+                    border-radius: 6px;
+                    opacity: 0.9;
+                    margin-top: 16px;
+                }
+
+                .contacts {
+                    position: absolute;
+
+                    display: flex;
+
+                    padding: 0 16px 8px;
+
+                    right: 0;
+                    bottom: 0;
+
+                    img {
+                        height: 48px;
+                        margin-left: 16px;
+                        cursor: pointer;
+                        pointer-events: all;
+                    }
+                }
+            }
+        }
+
+
+        .left-side {
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+
+            width: 364px;
+            height: 100%;
+
+            background: #00000059;
+
+            .mat-raised-button {
+                width: 200px;
+                height: 45px;
+                margin-bottom: 16px;
+                font-size: 16px;
+            }
+
+            .play-game {
+                display: flex;
+                flex-direction: column;
+                background: white;
+                border-radius: 16px;
+                padding: 16px;
+                width: 250px;
+
+                .play-wrapper {
+                    display: flex;
+                    flex-wrap: wrap;
+                }
+
+                .play {
+                    margin-right: 8px;
+                }
+            }
+        }
+
+        .right-side {
+            width: calc(100% - 364px);
+            height: 100%;
+            align-items: center;
+
+            padding-top: 36px;
+
+            box-sizing: border-box;
+        }
+    }
+
+
+}
+
+body::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
+
+body::-webkit-scrollbar
+{
+	width: 12px;
+	background-color: #F5F5F5;
+}
+
+body::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #555;
+}

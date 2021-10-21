@@ -1,0 +1,14 @@
+.mat-dialog-content {
+    display: flex;
+    flex-direction: column;
+
+    .critical {
+        span {
+            color: orange;
+        }
+    }
+}
+
+.mat-dialog-actions {
+    justify-content: flex-end;
+}

@@ -1,0 +1,235 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+    background: url("../../assets/images/background.png");
+    background-size: cover;
+}
+
+.header {
+    display: flex;
+    height: 64px;
+    width: 100%;
+
+    .drag-and-drop {
+        width: 100%;
+        height: 100%;
+        -webkit-app-region: drag;
+    }
+
+    .app-menu {
+        button {
+            width: 64px;
+            height: 64px;
+            color: white;
+        }
+    }
+}
+
+.content {
+    display: flex;
+    justify-content: space-around;
+    padding: 24px;
+    height: 100%;
+
+    > div {
+        display: flex;
+        flex-direction: column;
+        background: #00000059;
+        border-radius: 10px;
+        width: 45%;
+        max-height: 400px;
+        box-shadow: -4px 4px 6px rgba(0,0,0,0.5);
+
+        &.project-description {
+            color: white;
+
+            .about-us {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: 100%;
+
+                > .title {
+                    font-size: 24px;
+                    font-family: vikings;
+                    color: orange;
+                    height: 42px;
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .description {
+                    padding: 16px;
+                    font-size: 16px;
+                }
+            }
+
+            .links {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 8px 0;
+                height: 64px;
+                box-sizing: border-box;
+
+                img {
+                    width: 48px;
+                    margin: 0 8px;
+                    cursor: pointer;
+
+                    &.wiki {
+                        border-radius: 10px;
+                    }
+                }
+            }
+        }
+
+        &.news-wrapper {
+
+
+            > .title {
+                font-size: 24px;
+                color: white;
+                min-height: 42px;
+                width: 100%;
+                border-bottom: 2px solid orange;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .news {
+                display: flex;
+                flex-direction: column;
+                padding: 16px;
+                overflow-y: auto;
+
+                .news-item {
+                    color: white;
+                    display: flex;
+                    flex-direction: column;
+                    background: #00000052;
+                    padding: 8px;
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+
+                    .title {
+                        font-size: 16px;
+                        border-bottom: 1px solid gray;
+                        margin-bottom: 8px;
+                        padding-bottom: 4px;
+                    }
+                }
+            }
+        }
+
+        &.server-trackers {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+
+            .tracker {
+                height: 80px;
+                border: 0;
+                border-radius: 6px;
+                opacity: 0.9;
+                margin-top: 16px;
+            }
+        }
+    }
+}
+
+.footer {
+    position: relative;
+    display: flex;
+    height: 120px;
+    padding: 24px;
+    box-sizing: border-box;
+
+    .game-wrapper {
+        display: flex;
+        width: 100%;
+
+        .loading-progress {
+            display: flex;
+            width: 65%;
+            justify-content: flex-end;
+            flex-direction: column;
+            padding: 0 64px 0 64px;
+            box-sizing: border-box;
+
+            .message {
+                display: flex;
+                justify-content: space-between;
+
+                span.file {
+                    display: inline-block;
+                    max-width: 350px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+
+            .tracker {
+                width: 100%;
+                margin-bottom: -18px;
+                box-sizing: border-box;
+                margin-left: 8px;
+
+                iframe {
+                    width: 100%;
+                    height: 80px;
+                    border: 0;
+                    border-radius: 6px;
+                    opacity: 1;
+                }
+            }
+
+
+            span {
+                margin-bottom: 8px;
+            }
+
+            mat-progress-bar {
+                height: 8px;
+
+                &.global {
+                    margin-top: 8px;
+                }
+            }
+        }
+
+        .server-selector {
+            display: flex;
+            width: 358px;
+            align-items: flex-end;
+
+            ::ng-deep {
+                mat-form-field {
+                    height: 54px;
+                    margin-right: 8px;
+                    width: 130px;
+
+                    .mat-form-field-wrapper {
+                        padding: 0;
+                    }
+                }
+
+                button.mat-raised-button {
+                    height: 50px;
+                    width: 140px;
+                }
+
+                button.mat-menu-trigger {
+                    margin-left: 8px;
+                }
+            }
+        }
+    }
+}

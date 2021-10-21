@@ -1,0 +1,82 @@
+<div class="header">
+    <div class="drag-and-drop"></div>
+    <div class="app-menu">
+        <button mat-icon-button (click)="closeApp()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+</div>
+<div class="content">
+    <div class="project-description">
+        <div class="about-us">
+            <span class="title">{{ settingsService.settings.ProjectName }}</span>
+            <span class="description" [innerHTML]="settingsService.settings.ProjectDescription"></span>
+        </div>
+        <div class="links">
+            <img src="./assets/images/vk.svg" alt="" *ngIf="settingsService.settings.VkUrl" (click)="openExternal(settingsService.settings.VkUrl)">
+            <img src="./assets/images/discord.svg" alt="" *ngIf="settingsService.settings.DiscordUrl" (click)="openExternal(settingsService.settings.DiscordUrl)">
+            <img src="./assets/images/wiki.png" class="wiki" alt="" *ngIf="settingsService.settings.WikiUrl" (click)="openExternal(settingsService.settings.WikiUrl)">
+
+        </div>
+    </div>
+    <div class="news-wrapper">
+        <span class="title">Новости</span>
+        <div class="news">
+            <div class="news-item" *ngFor="let news of settingsService.settings.News">
+                <span class="title">{{ news.Title }}</span>
+                <div class="data" [innerHTML]="news.Content "></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="footer">
+    <div class="game-wrapper">
+        <div class="loading-progress">
+            <ng-container *ngIf="isGameLoading">
+                <div class="message">
+                    <span class="file">{{ stepProgressMessage }}</span>
+                    <span>{{ globalProgressMessage }}</span>
+                </div>
+                <mat-progress-bar [value]="stepProgress" color="accent"></mat-progress-bar>
+                <mat-progress-bar [value]="globalProgress" color="accent" class="global"></mat-progress-bar>
+            </ng-container>
+            <ng-container *ngIf="!isGameLoading && selectedServer">
+                <div class="tracker">
+                    <iframe [src]="selectedServer.TrustedTrackerUrl"></iframe>
+                </div>
+            </ng-container>
+        </div>
+        <div class="server-selector">
+            <mat-form-field appearance="outline">
+                <mat-label>Сервер</mat-label>
+                <mat-select [(ngModel)]="selectedServer" [disabled]="isGameLoading">
+                    <mat-option *ngFor="let server of servers" [value]="server">{{ server.DisplayText }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <div class="game-controls" *ngIf="selectedServer">
+                <button mat-raised-button color="accent" [disabled]="isGameLoading" (click)="startGame()">Играть</button>
+                <button mat-icon-button [disabled]="isGameLoading" [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                    <button mat-menu-item>
+                        <mat-icon>bolt</mat-icon>
+                        <mat-checkbox [(ngModel)]="gameService.userPreference.Vulkan">Вулкан</mat-checkbox>
+                    </button>
+                    <button mat-menu-item (click)="checkForUpdates(true)">
+                        <mat-icon>build</mat-icon>
+                        <span>Переустановить игру</span>
+                    </button>
+                    <button mat-menu-item (click)="openGameFolder()">
+                        <mat-icon>folder</mat-icon>
+                        <span>Папка с игрой</span>
+                    </button>
+                    <button mat-menu-item (click)="openLogFolder()">
+                        <mat-icon>text_snippet</mat-icon>
+                        <span>Логи</span>
+                    </button>
+                </mat-menu>
+            </div>
+        </div>
+    </div>
+</div>
