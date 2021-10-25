@@ -24,8 +24,6 @@ export class AutoUpdateService {
     }
 
     public skipUpdate() {
-        this.isUpdateAvailable = false;
-
         this._userPreferenceService.skipUpdate = true;
     }
 
@@ -34,6 +32,8 @@ export class AutoUpdateService {
             this._electronService.ipcRenderer.on('check-for-updates-result', (event, result) => {
                 if (result) {
                     this.isUpdateAvailable = true;
+                } else {
+                    this._userPreferenceService.skipUpdate = false;
                 }
 
                 resolve();

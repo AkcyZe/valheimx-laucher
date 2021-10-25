@@ -53,12 +53,107 @@ function createWindow() {
     });
 }
 
-const initPaths = () => {
+const cyrillicPattern = /[а-яА-ЯЁё]/;
+const isCyrillicExists = (path) => {
+    return cyrillicPattern.test(path);
+}
+
+const getNewGamePath = async (force = false) => {
+    const result = await dialog.showOpenDialog(browserWindow, {
+        title: "Выберите папку установки клиента. Путь должен содержать только ЛАТИНСКИЕ СИМВОЛЫ",
+        buttonLabel: "Выбрать",
+        defaultPath: defaultGameFolderPath,
+        properties: ['openDirectory'],
+    });
+
+    if (result.canceled && !force) {
+        return null;
+    }
+
+    let newPath = result.filePaths[0];
+    if (isCyrillicExists(newPath)) {
+        await dialog.showMessageBox({
+            title: "Ошибка",
+            message: "Путь до клиента должен содержать только клиентские символы"
+        })
+
+        newPath = await getNewGamePath(force);
+    }
+
+    return newPath;
+};
+
+const copyFileSync = (source,target) => {
+    let targetFile = target;
+
+    if ( fs.existsSync( target ) ) {
+        if ( fs.lstatSync( target ).isDirectory() ) {
+            targetFile = path.join( target, path.basename( source ) );
+        }
+    }
+
+    fs.writeFileSync(targetFile, fs.readFileSync(source));
+}
+
+const copyFolderRecursiveSync = (source, target) => {
+    let files = [];
+
+    const targetFolder = path.join( target, path.basename( source ) );
+    if ( !fs.existsSync( targetFolder ) ) {
+        fs.mkdirSync( targetFolder );
+    }
+
+    if ( fs.lstatSync( source ).isDirectory() ) {
+        files = fs.readdirSync( source );
+        files.forEach( function ( file ) {
+            var curSource = path.join( source, file );
+            if ( fs.lstatSync( curSource ).isDirectory() ) {
+                copyFolderRecursiveSync( curSource, targetFolder );
+            } else {
+                copyFileSync( curSource, targetFolder );
+            }
+        } );
+    }
+}
+
+const getGameFolder = (serverName) => {
+    return path.join(gameFolderPath, serverName);
+}
+
+const createGameFolder = (serverName) => {
+    const gamePath = path.join(gameFolderPath, serverName);
+
+    if (!fs.existsSync(gamePath)) {
+        fs.mkdirSync(gamePath);
+    }
+}
+
+const initPaths = async () => {
     const userDataPath = (app || remote).getPath('userData');
 
-    userPreferencePath = path.join(userDataPath, 'user-preference.json');
+    let userPreference;
+
     gameFolderPath = path.join(userDataPath, 'Servers');
-    defaultGameFolderPath = gameFolderPath;
+    userPreferencePath = path.join(userDataPath, 'user-preference.json');
+    if (fs.existsSync(userPreferencePath)) {
+        const stringData = fs.readFileSync(userPreferencePath, { encoding: 'utf8' });
+        userPreference = JSON.parse(stringData) ?? {};
+        if (userPreference.GameFolder && userPreference.GameFolder.length) {
+            gameFolderPath = userPreference.GameFolder;
+        }
+    }
+
+    if (!gameFolderPath || isCyrillicExists(gameFolderPath)) {
+        gameFolderPath = await getNewGamePath(true);
+
+        if (userPreference && gameFolderPath) {
+            userPreference.GameFolder = gameFolderPath;
+
+            fs.writeFileSync(userPreferencePath, JSON.stringify(userPreference));
+        }
+    }
+
+    defaultGameFolderPath = gameFolderPath
 
     initGameFolder(gameFolderPath);
 }
@@ -75,10 +170,12 @@ const initGameFolder = (path) => {
     }
 }
 
-initPaths();
-
 app.commandLine.appendSwitch("disable-http-cache");
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+    createWindow();
+
+    initPaths();
+})
 
 app.on('window-all-closed', app.quit);
 ipcMain.on('close', app.quit);
@@ -338,24 +435,29 @@ ipcMain.handle('load-user-preference', (event) => {
     });
 });
 
+ipcMain.handle('check-game-folder-path', (event) => {
+    return new Promise((resolve, reject) => {
+        let data = null;
+        if (fs.existsSync(userPreferencePath)) {
+            data = fs.readFileSync(userPreferencePath, { encoding: 'utf8' });
+        }
+
+        resolve(data);
+    });
+});
+
 ipcMain.on('set-game-folder', (event, data) => {
     initGameFolder(data);
 });
 
 ipcMain.handle('change-game-folder', (event, serverName) => {
     return new Promise(async (resolve, reject) => {
-        const result = await dialog.showOpenDialog(browserWindow, {
-            defaultPath: defaultGameFolderPath,
-            properties: ['openDirectory']
-        });
-
-        if (result.canceled) {
+        let newPath = await getNewGamePath();
+        if (!newPath) {
             return resolve(null);
         }
 
-        let newPath = result.filePaths[0];
-
-        copyFolderRecursiveSync(prevGameFolderPath, newPath);
+        // copyFolderRecursiveSync(prevGameFolderPath, newPath);
 
         newPath = path.join(newPath, 'Servers');
 
@@ -364,48 +466,3 @@ ipcMain.handle('change-game-folder', (event, serverName) => {
         resolve(newPath);
     });
 });
-
-const copyFileSync = (source,target) => {
-    let targetFile = target;
-
-    if ( fs.existsSync( target ) ) {
-        if ( fs.lstatSync( target ).isDirectory() ) {
-            targetFile = path.join( target, path.basename( source ) );
-        }
-    }
-
-    fs.writeFileSync(targetFile, fs.readFileSync(source));
-}
-
-const copyFolderRecursiveSync = (source, target) => {
-    let files = [];
-
-    const targetFolder = path.join( target, path.basename( source ) );
-    if ( !fs.existsSync( targetFolder ) ) {
-        fs.mkdirSync( targetFolder );
-    }
-
-    if ( fs.lstatSync( source ).isDirectory() ) {
-        files = fs.readdirSync( source );
-        files.forEach( function ( file ) {
-            var curSource = path.join( source, file );
-            if ( fs.lstatSync( curSource ).isDirectory() ) {
-                copyFolderRecursiveSync( curSource, targetFolder );
-            } else {
-                copyFileSync( curSource, targetFolder );
-            }
-        } );
-    }
-}
-
-const getGameFolder = (serverName) => {
-    return path.join(gameFolderPath, serverName);
-}
-
-const createGameFolder = (serverName) => {
-    const gamePath = path.join(gameFolderPath, serverName);
-
-    if (!fs.existsSync(gamePath)) {
-        fs.mkdirSync(gamePath);
-    }
-}

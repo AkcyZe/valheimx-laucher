@@ -78,9 +78,21 @@ export class UserPreferenceService {
 
             this._userPreference = JSON.parse(result) as UserPreference;
 
-            if (this._userPreference.GameFolder && this._userPreference.GameFolder.length) {
-                this._electronService.ipcRenderer.send('set-game-folder', this._userPreference.GameFolder);
+            this.setGameFolder();
+        });
+    }
+
+    public async changeGameFolder() {
+        this._electronService.ipcRenderer.invoke("change-game-folder").then((result) => {
+            if (result) {
+                this.gameFolder = result;
             }
         });
+    }
+
+    private setGameFolder() {
+        if (this._userPreference.GameFolder && this._userPreference.GameFolder.length) {
+            this._electronService.ipcRenderer.send('set-game-folder', this._userPreference.GameFolder);
+        }
     }
 }

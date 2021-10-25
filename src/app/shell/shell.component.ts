@@ -123,11 +123,7 @@ export class ShellComponent implements OnInit {
     }
 
     changeGameFolder() {
-        this.electronService.ipcRenderer.invoke("change-game-folder").then((result) => {
-            if (result) {
-                this.userPreferenceService.gameFolder = result;
-            }
-        });
+        this.userPreferenceService.changeGameFolder();
     }
 
     updateGame(serverName: string, filesForDelete: string[], filesForUpdate: string[]): Promise<boolean> {
