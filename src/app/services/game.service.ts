@@ -3,17 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { ElectronService } from 'ngx-electron';
 import { DomSanitizer } from '@angular/platform-browser';
-import { ServerInfo } from '../interfaces/server-info';
 import { Metrika } from 'ng-yandex-metrika';
 import { Progress } from 'electron-dl';
+import { SettingsService } from './settings.service';
+import { UserPreferenceService } from './user-preference.service';
+import { ServerData } from '../interfaces/settings';
 
-const fs = (window as any).require('fs');
-
-export interface IUserPreference {
-    LastConnectedServer: string;
-    Vulkan: boolean;
-    ShouldVote: boolean;
-}
 
 export interface HashKey {
     hash: string;
@@ -31,25 +26,15 @@ const ServersUrl = 'https://pastebin.com/raw/cbFFb6ZT';
     providedIn: 'root',
 })
 export class GameService {
-    public servers: ServerInfo[];
-    public userPreference: IUserPreference;
-
     public downloadProgressSubject = new Subject<DownloadProgress>();
     public downloadCompletedSubject = new Subject();
-
-    public serversListUpdated: Subject<ServerInfo[]> = new Subject<ServerInfo[]>();
-
-    private refreshInterval: NodeJS.Timeout;
 
     constructor(
         private _http: HttpClient,
         private _electronService: ElectronService,
-        private _metrika: Metrika,
-        private _sanitizer: DomSanitizer) {
-
-        this.userPreference = this.getUserPreference();
-        this.createGameFolder();
-
+        private _settingsService: SettingsService,
+        private _userPreferenceService: UserPreferenceService,
+        private _metric: Metrika) {
         this.subscribeOnIpcMainEvents();
     }
 
@@ -63,69 +48,10 @@ export class GameService {
         });
     }
 
-    createGameFolder() {
-        if (!fs.existsSync('Games')) {
-            fs.mkdirSync('Games');
-        }
-    }
-
     getLastConnectedServer() {
-        if (this.userPreference && this.userPreference.LastConnectedServer) {
-            return this.servers.find(server => server.Name === this.userPreference.LastConnectedServer);
+        if (this._userPreferenceService.lastConnectedServer) {
+            return this._settingsService.servers.find(server => server.Name === this._userPreferenceService.lastConnectedServer);
         }
-    }
-
-    async fetchServerList() {
-        return new Promise<ServerInfo[]>((resolve, reject) => {
-           this._http.get<ServerInfo[]>(ServersUrl).subscribe(servers => {
-               this.servers = servers;
-
-               this.servers.forEach(server => {
-                   server.TrustedTrackerUrl = this._sanitizer.bypassSecurityTrustResourceUrl(server.TrackerUrl);
-
-                   const serverFilesDir = `Games/${server.Name}`;
-                   if (!fs.existsSync(serverFilesDir)) {
-                       fs.mkdirSync(serverFilesDir);
-                   }
-               });
-
-               this.serversListUpdated.next(this.servers);
-
-               this.startFetchingInterval();
-
-               resolve(servers);
-           }, error => {
-               console.error(error);
-
-               reject(error);
-           });
-        });
-    }
-
-    startFetchingInterval() {
-        if (!this.refreshInterval) {
-            this.refreshInterval = setInterval(() => {
-                this.fetchServerList();
-            }, 10000);
-        }
-    }
-
-    getUserPreference(): IUserPreference {
-        if (!fs.existsSync(`config.json`)) {
-            return {
-                LastConnectedServer: null,
-                Vulkan: false,
-                ShouldVote: true
-            } as IUserPreference;
-        } else {
-            const prefString = fs.readFileSync(`config.json`, { encoding: 'utf8' });
-
-            return JSON.parse(prefString);
-        }
-    }
-
-    updateUserPreference() {
-        fs.writeFileSync(`config.json`, JSON.stringify(this.userPreference));
     }
 
     async deleteAllFiles(serverName: string): Promise<void> {
@@ -204,25 +130,11 @@ export class GameService {
         });
     }
 
-    isGameInstalled(serverName: string): boolean {
-        return fs.existsSync(`Games/${serverName}/valheim.exe`);
-    }
-
-    isGameVersionValid(server: ServerInfo): boolean {
-        if (!fs.existsSync(`Games/${server.Name}/version.txt`)) {
-            return false;
-        } else {
-            const gameVersion = fs.readFileSync(`Games/${server.Name}/version.txt`, { encoding: 'utf8' }) .trim();
-
-            return server.GameVersion === gameVersion;
-        }
-    }
-
     isSteamEnabled(): Promise<boolean> {
         return this._electronService.ipcRenderer.invoke('isProcessRunning', "steam");
     }
 
-    startGame(server: ServerInfo): Promise<void> {
+    startGame(server: ServerData): Promise<void> {
         const launchParams = [];
 
         if (server) {
@@ -230,21 +142,18 @@ export class GameService {
             launchParams.push(server.Ip);
         }
 
-        if (this.userPreference.Vulkan) {
+        if (this._userPreferenceService.vulkanEnabled) {
             launchParams.push('-force-vulkan');
         }
 
         const params = {
             server: server.Name,
-            launchParams,
-            vulkan: this.userPreference.Vulkan
+            launchParams
         };
 
-        this._metrika.fireEvent('START-GAME');
+        this._metric.fireEvent('START-GAME');
 
-        this.userPreference.LastConnectedServer = server.Name;
-
-        this.updateUserPreference();
+        this._userPreferenceService.lastConnectedServer = server.Name;
 
         return this._electronService.ipcRenderer.invoke('startGame', params);
     }

@@ -18,18 +18,22 @@ import { SettingsService } from './services/settings.service';
 import { MatDialogModule } from '@angular/material/dialog'
 import { ErrorDialogComponent } from './dialogs/error/error.dialog';
 import { DialogService } from './services/dialog.service';
-import { OldLauncherDialogComponent } from './dialogs/old-launcher/old-launcher.dialog';
+import { SteamNotFoundDialog } from './dialogs/steam-not-found/steam-not-found.dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MetrikaModule } from 'ng-yandex-metrika';
 import { VoteDialogComponent } from './dialogs/vote/vote.dialog';
+import { AutoUpdateComponent } from './auto-update/auto-update.component';
+import { UserPreferenceService } from './services/user-preference.service';
+import { AutoUpdateService } from './services/auto-update.service';
 
 @NgModule({
     declarations: [
         AppComponent,
         ShellComponent,
         ErrorDialogComponent,
-        OldLauncherDialogComponent,
-        VoteDialogComponent
+        SteamNotFoundDialog,
+        VoteDialogComponent,
+        AutoUpdateComponent
     ],
     imports: [
         BrowserModule,
@@ -56,7 +60,7 @@ import { VoteDialogComponent } from './dialogs/vote/vote.dialog';
             accurateTrackBounce: true
         }, 82629355)
     ],
-    providers: [SettingsService, DialogService],
+    providers: [SettingsService, DialogService, UserPreferenceService, AutoUpdateService],
     bootstrap: [AppComponent]
 })
 export class AppModule {

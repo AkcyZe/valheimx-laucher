@@ -3,8 +3,62 @@
     height: 100%;
 }
 
-app-shell {
-    background-color: black;
+.body-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+
+    background: url("../assets/images/background.png");
+    background-size: cover;
+
+    &.loaded {
+        background-color: black;
+    }
+
+    &.update {
+        .header,
+        .content {
+            backdrop-filter: blur(5px);
+        }
+    }
+
+    .header {
+        display: flex;
+        height: 64px;
+        width: 100%;
+
+        .drag-and-drop {
+            width: 100%;
+            height: 100%;
+            -webkit-app-region: drag;
+        }
+
+        .app-menu {
+            display: flex;
+            align-items: center;
+
+            button.update {
+                height: 40px;
+                width: 152px;
+            }
+
+            button.close {
+                width: 64px;
+                height: 64px;
+                color: white;
+            }
+        }
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
 }
 
 .version {

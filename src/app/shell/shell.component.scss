@@ -3,30 +3,9 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-
-    background: url("../../assets/images/background.png");
     background-size: cover;
 }
 
-.header {
-    display: flex;
-    height: 64px;
-    width: 100%;
-
-    .drag-and-drop {
-        width: 100%;
-        height: 100%;
-        -webkit-app-region: drag;
-    }
-
-    .app-menu {
-        button {
-            width: 64px;
-            height: 64px;
-            color: white;
-        }
-    }
-}
 
 .content {
     display: flex;

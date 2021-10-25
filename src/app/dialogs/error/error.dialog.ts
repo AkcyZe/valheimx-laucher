@@ -11,4 +11,8 @@ export class ErrorDialogComponent {
     constructor(
         public dialogRef: MatDialogRef<ErrorDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: ErrorMessage) {}
+
+    public close(result: boolean) {
+        this.dialogRef.close(true);
+    }
 }

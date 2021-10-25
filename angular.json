@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ValheimX": {
+    "Ragnarok": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -66,18 +66,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ValheimX:build"
+            "browserTarget": "Ragnarok:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ValheimX:build:production"
+              "browserTarget": "Ragnarok:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ValheimX:build"
+            "browserTarget": "Ragnarok:build"
           }
         },
         "test": {
@@ -115,16 +115,16 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "xLauncher:serve"
+            "devServerTarget": "Ragnarok:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "xLauncher:serve:production"
+              "devServerTarget": "Ragnarok:serve:production"
             }
           }
         }
       }
     }
   },
-  "defaultProject": "xLauncher"
+  "defaultProject": "Ragnarok"
 }

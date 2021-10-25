@@ -1,14 +1,15 @@
 {
-    "name": "ValheimX",
-    "version": "2.0.4",
+    "name": "Ragnarok",
+    "version": "3.0.0",
     "main": "main.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/AkcyZe/valheimx-laucher.git"
     },
     "scripts": {
-        "start": "ng build --watch",
+        "debug": "ng build --watch",
         "electron": "electron .",
+        "prod": "ng build --prod",
         "build": "electron-builder",
         "deploy": "electron-builder build --win --publish always"
     },
@@ -32,6 +33,7 @@
         "is-admin": "^3.0.0",
         "ng-yandex-metrika": "^4.0.0",
         "ngx-electron": "^2.2.0",
+        "path": "^0.12.7",
         "ps-node": "^0.1.6",
         "rxjs": "^6.6.7",
         "tslib": "^2.0.0",
@@ -59,7 +61,7 @@
         "typescript": "~4.1.5"
     },
     "build": {
-        "appId": "ValheimX",
+        "appId": "Ragnarok",
         "icon": "./icon.png",
         "directories": {
             "output": "build"
@@ -68,7 +70,7 @@
             {
                 "provider": "github",
                 "owner": "AkcyZe",
-                "url": "https://github.com/AkcyZe/valheimx-laucher/releases"
+                "repo": "valheimx-laucher"
             }
         ],
         "win": {

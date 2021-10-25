@@ -1,29 +1,63 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { GlobalSettings } from '../interfaces/global-settings';
+import { ServerData, Settings } from '../interfaces/settings';
+import { DomSanitizer } from '@angular/platform-browser';
+import { Subject } from 'rxjs';
 
-const SettingsUlr = 'https://pastebin.com/raw/TXPz28JL';
+export const HOST_URL = 'http://185.189.255.227:9323';
+const SETTINGS_URL = 'http://185.189.255.227:9323/Launcher/Settings.json';
+
+const fs = (window as any).require('fs');
 
 @Injectable({
     providedIn: 'root',
 })
 export class SettingsService {
-    public settings: GlobalSettings;
+    public settings: Settings;
+    public servers: ServerData[];
 
-    constructor(private _http: HttpClient) {
+    public serversListUpdated: Subject<ServerData[]> = new Subject<ServerData[]>();
+
+    private refreshInterval: NodeJS.Timeout;
+
+    constructor(private _http: HttpClient,
+                private _sanitizer: DomSanitizer) {}
+
+    async init(): Promise<void> {
+        this.settings = await this.fetchSettings();
+
+        this.handleServerList(this.settings);
+
+        this.startFetchingInterval();
     }
 
-    async fetchSettings(): Promise<GlobalSettings> {
-        return new Promise<GlobalSettings>((resolve, reject) => {
-            this._http.get<GlobalSettings>(SettingsUlr).subscribe(result => {
-                this.settings = result;
-
+    private async fetchSettings(): Promise<Settings> {
+        return new Promise<Settings>((resolve, reject) => {
+            this._http.get<Settings>(SETTINGS_URL).subscribe(result => {
                 resolve(result);
             }, error => {
-                console.log(error);
-
                 reject(error);
-            });
+            })
         });
+    }
+
+    startFetchingInterval() {
+        if (!this.refreshInterval) {
+            this.refreshInterval = setInterval(async () => {
+                try {
+                    const settings = await this.fetchSettings();
+                    this.handleServerList(settings);
+                } catch (error) {}
+            }, 10000);
+        }
+    }
+
+    private handleServerList(settings: Settings): void {
+        this.servers = settings.Servers;
+        this.servers.forEach(server => {
+            server.TrustedTrackerUrl = this._sanitizer.bypassSecurityTrustResourceUrl(server.TrackerUrl);
+        });
+
+        this.serversListUpdated.next(this.servers);
     }
 }

@@ -1,0 +1,8 @@
+<div class="content">
+    <span *ngIf="!isUpdateInProgress">Доступно обновление лаунчера</span>
+    <mat-spinner *ngIf="isUpdateInProgress" color="accent"></mat-spinner>
+</div>
+<div class="footer">
+    <button *ngIf="!isUpdateInProgress" mat-raised-button (click)="cancelUpdate()">Отложить</button>
+    <button *ngIf="!isUpdateInProgress" mat-raised-button color="accent" (click)="update()">Обновить</button>
+</div>

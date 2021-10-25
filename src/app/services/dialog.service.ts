@@ -19,21 +19,23 @@ export class DialogService {
                     Title: 'Ошибка',
                     Message: message,
                     Critical: critical
-                }
+                },
+                disableClose: true
             }).afterClosed().subscribe(() => {
                 resolve();
             });
         });
     }
 
-    openDialog<T>(component: ComponentType<T>, data?: any) {
-        return new Promise<void>((resolve) => {
+    openDialog<T>(component: ComponentType<T>, data?: any): Promise<any> {
+        return new Promise<any>((resolve) => {
             this._dialog.closeAll();
 
             this._dialog.open(component, {
-                data: data
-            }).afterClosed().subscribe(() => {
-                resolve();
+                data: data,
+                disableClose: true
+            }).afterClosed().subscribe((result) => {
+                resolve(result);
             })
         });
     }

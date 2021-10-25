@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, remote, dialog } = require('electron');
 const { download } = require('electron-dl');
 const { autoUpdater } = require('electron-updater');
 
@@ -15,13 +15,17 @@ require('electron-reloader')(module);
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 const isDevBuild = false;
-const rootPath = isDevBuild ? __dirname : path.join(app.getPath("exe"), '../');
 
 let browserWindow;
 let isGameStarted = false;
 
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
+let userPreferencePath;
+let gameFolderPath;
+let defaultGameFolderPath;
+let prevGameFolderPath;
 
 function createWindow() {
     browserWindow = new BrowserWindow({
@@ -44,20 +48,34 @@ function createWindow() {
         browserWindow = null
     })
 
-    autoUpdater.checkForUpdatesAndNotify().then((result) => {
-        if (result) {
-            browserWindow.webContents.send('log', JSON.stringify(result.updateInfo));
-        } else {
-            browserWindow.webContents.send('log', "Update not found.");
-        }
-    }, error => {
-        browserWindow.webContents.send('error', error);
-    });
-
     browserWindow.loadFile(path.join(__dirname, '/dist/index.html')).then(() => {
         console.log("Index loaded.")
     });
 }
+
+const initPaths = () => {
+    const userDataPath = (app || remote).getPath('userData');
+
+    userPreferencePath = path.join(userDataPath, 'user-preference.json');
+    gameFolderPath = path.join(userDataPath, 'Servers');
+    defaultGameFolderPath = gameFolderPath;
+
+    initGameFolder(gameFolderPath);
+}
+
+const initGameFolder = (path) => {
+    if (gameFolderPath) {
+        prevGameFolderPath = gameFolderPath;
+    }
+
+    gameFolderPath = path;
+
+    if (!fs.existsSync(gameFolderPath)) {
+        fs.mkdirSync(gameFolderPath);
+    }
+}
+
+initPaths();
 
 app.commandLine.appendSwitch("disable-http-cache");
 app.whenReady().then(createWindow)
@@ -65,10 +83,37 @@ app.whenReady().then(createWindow)
 app.on('window-all-closed', app.quit);
 ipcMain.on('close', app.quit);
 
-/**
- * Auto update
-//  */
+console.log(app.getPath('userData'));
 
+ipcMain.on('check-for-updates', async (event) => {
+    let result;
+
+    try {
+        if (isDevBuild) {
+            result = await autoUpdater.checkForUpdates();
+        } else {
+            result = await autoUpdater.checkForUpdatesAndNotify();
+        }
+    } catch (error) {
+        result = null;
+    }
+
+    if (!result) {
+        browserWindow.webContents.send('check-for-updates-result', null);
+
+        return;
+    }
+
+    browserWindow.webContents.send('check-for-updates-result', JSON.stringify(result.updateInfo));
+});
+
+ipcMain.on('install-update', (event) => {
+   autoUpdater.downloadUpdate();
+});
+
+/*
+* Emit on update downloaded
+* */
 autoUpdater.on('update-downloaded', () => {
     autoUpdater.quitAndInstall();
 });
@@ -91,8 +136,12 @@ ipcMain.handle('checkOnAdminRights', (e, data) => {
 * */
 ipcMain.handle('getHashTable', async (event, serverName) => {
     return new Promise((resolve, reject) => {
+
+        createGameFolder(serverName);
+
        try {
-           glob(`${rootPath}/Games/${serverName}/**/*`, { nodir: true }, (err, res) => {
+           console.log(`${getGameFolder(serverName)}/**/*`);
+           glob(`${getGameFolder(serverName)}/**/*`, { nodir: true }, (err, res) => {
                if (err) {
                    return reject(err);
                }
@@ -105,9 +154,11 @@ ipcMain.handle('getHashTable', async (event, serverName) => {
 
                    hashSum.update(fileBuffer);
 
+                   console.log(path.replace(`${getGameFolder(serverName)}/`, ""));
+
                    hashTable.push({
                        hash: hashSum.digest('hex').toUpperCase(),
-                       path: path.replace(`${rootPath}/Games/`, "")
+                       path: path.replace(`${getGameFolder(serverName)}/`, "")
                    });
                });
 
@@ -142,7 +193,9 @@ ipcMain.handle('delete-file', async (e, serverName, path) => {
 ipcMain.handle('delete-all-file', async (e, serverName) => {
    return new Promise((resolve, reject) => {
        try {
-           glob(`${rootPath}/Games/${serverName}/**/*`, { nodir: true }, (err, res) => {
+           createGameFolder(serverName);
+
+           glob(`${getGameFolder(serverName)}/**/*`, { nodir: true }, (err, res) => {
                if (err) {
                    return reject(err);
                }
@@ -173,7 +226,7 @@ ipcMain.handle('download-file', async (e, serverName, url, path) => {
 
        try {
            await download(browserWindow, `${url}/${path}`, {
-               directory: `${rootPath}\\Games\\${serverName}\\${storagePath}`,
+               directory: `${getGameFolder(serverName)}\\${storagePath}`,
                onProgress: (progress) => {
                    browserWindow.webContents.send('download-progress', filename, progress);
                },
@@ -193,7 +246,7 @@ ipcMain.handle('download-file', async (e, serverName, url, path) => {
 ipcMain.handle('startGame', (event, params) => {
     return new Promise((resolve, reject) => {
         try {
-            let url = `${rootPath}/Games/${params.server}/valheim.exe`;
+            let url = `${getGameFolder(params.server)}/valheim.exe`;
 
             isGameStarted = true;
 
@@ -219,7 +272,7 @@ ipcMain.on('get-version', (e) => {
 });
 
 ipcMain.on('openGameFolder', (e, serverName) => {
-    shell.openPath(path.join(rootPath, `/Games/${serverName}`));
+    shell.openPath(getGameFolder(serverName));
 });
 
 ipcMain.on('openLogFolder', () => {
@@ -265,3 +318,94 @@ setInterval(() => {
         });
     }
 }, 5000);
+
+
+/*
+* User Preference
+*/
+ipcMain.on('save-user-preference', (event, data) => {
+    fs.writeFileSync(userPreferencePath, data);
+});
+
+ipcMain.handle('load-user-preference', (event) => {
+    return new Promise((resolve, reject) => {
+        let data = null;
+        if (fs.existsSync(userPreferencePath)) {
+            data = fs.readFileSync(userPreferencePath, { encoding: 'utf8' });
+        }
+
+        resolve(data);
+    });
+});
+
+ipcMain.on('set-game-folder', (event, data) => {
+    initGameFolder(data);
+});
+
+ipcMain.handle('change-game-folder', (event, serverName) => {
+    return new Promise(async (resolve, reject) => {
+        const result = await dialog.showOpenDialog(browserWindow, {
+            defaultPath: defaultGameFolderPath,
+            properties: ['openDirectory']
+        });
+
+        if (result.canceled) {
+            return resolve(null);
+        }
+
+        let newPath = result.filePaths[0];
+
+        copyFolderRecursiveSync(prevGameFolderPath, newPath);
+
+        newPath = path.join(newPath, 'Servers');
+
+        initGameFolder(newPath);
+
+        resolve(newPath);
+    });
+});
+
+const copyFileSync = (source,target) => {
+    let targetFile = target;
+
+    if ( fs.existsSync( target ) ) {
+        if ( fs.lstatSync( target ).isDirectory() ) {
+            targetFile = path.join( target, path.basename( source ) );
+        }
+    }
+
+    fs.writeFileSync(targetFile, fs.readFileSync(source));
+}
+
+const copyFolderRecursiveSync = (source, target) => {
+    let files = [];
+
+    const targetFolder = path.join( target, path.basename( source ) );
+    if ( !fs.existsSync( targetFolder ) ) {
+        fs.mkdirSync( targetFolder );
+    }
+
+    if ( fs.lstatSync( source ).isDirectory() ) {
+        files = fs.readdirSync( source );
+        files.forEach( function ( file ) {
+            var curSource = path.join( source, file );
+            if ( fs.lstatSync( curSource ).isDirectory() ) {
+                copyFolderRecursiveSync( curSource, targetFolder );
+            } else {
+                copyFileSync( curSource, targetFolder );
+            }
+        } );
+    }
+}
+
+const getGameFolder = (serverName) => {
+    return path.join(gameFolderPath, serverName);
+}
+
+const createGameFolder = (serverName) => {
+    const gamePath = path.join(gameFolderPath, serverName);
+
+    if (!fs.existsSync(gamePath)) {
+        fs.mkdirSync(gamePath);
+    }
+}

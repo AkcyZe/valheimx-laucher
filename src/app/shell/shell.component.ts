@@ -1,14 +1,15 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { GameService, HashKey } from '../services/game.service';
-import { ServerInfo } from '../interfaces/server-info';
-import { HttpEventType } from '@angular/common/http';
+import { GameService } from '../services/game.service';
 import { DialogService } from '../services/dialog.service';
-import { SettingsService } from '../services/settings.service';
+import { HOST_URL, SettingsService } from '../services/settings.service';
 import { Metrika } from 'ng-yandex-metrika';
 import { VoteDialogComponent } from '../dialogs/vote/vote.dialog';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { SteamNotFoundDialog } from '../dialogs/steam-not-found/steam-not-found.dialog';
+import { ServerData } from '../interfaces/settings';
+import { UserPreferenceService } from '../services/user-preference.service';
 
 @Component({
     selector: 'app-shell',
@@ -17,10 +18,10 @@ import { finalize } from 'rxjs/operators';
 })
 export class ShellComponent implements OnInit {
 
-    public set selectedServer(value: ServerInfo) {
+    public set selectedServer(value: ServerData) {
         this._selectedServer = value;
     }
-    public get selectedServer(): ServerInfo {
+    public get selectedServer(): ServerData {
         return this._selectedServer;
     }
 
@@ -30,51 +31,55 @@ export class ShellComponent implements OnInit {
     public stepProgressMessage = 'Загрузка файлов игры...';
     public globalProgressMessage = '0/218';
 
-    public servers: ServerInfo[];
 
-    private _selectedServer: ServerInfo;
+    public get servers(): ServerData[] {
+        return this._servers;
+    }
+
+    private _servers: ServerData[];
+    private _selectedServer: ServerData;
 
     private _progressSubscription: Subscription;
 
+    public isGameStarting: boolean;
+
     constructor(public gameService: GameService,
+                public userPreferenceService: UserPreferenceService,
                 public settingsService: SettingsService,
                 private electronService: ElectronService,
+                private _settingService: SettingsService,
                 private _metrika: Metrika,
                 private _dialogService: DialogService,
                 private _changeDetectorRef: ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
-        this.servers = this.gameService.servers;
-
         this._progressSubscription = this.gameService.downloadProgressSubject.subscribe((progress) => {
             this.stepProgress = this.compilePercent(progress.progress.transferredBytes, progress.progress.totalBytes, progress.fileName);
         });
 
-        if (this.gameService.servers.length > 0) {
+        this.setServers();
+    }
+
+    private setServers() {
+        this._servers = this.settingsService.servers;
+        this.settingsService.serversListUpdated.subscribe((servers) => {
+            if (servers.length != this.servers.length) {
+                this._servers = servers;
+            }
+        });
+
+        if (this.servers.length > 0) {
             let lastConnectedServer = this.gameService.getLastConnectedServer();
             if (!lastConnectedServer) {
-                lastConnectedServer = this.gameService.servers[0];
+                lastConnectedServer = this.servers[0];
             }
 
             this.selectedServer = lastConnectedServer;
-
-            this.gameService.serversListUpdated.subscribe((servers) => {
-                this.servers.forEach(server => {
-                   const newServerInfo = servers.find(serverInfo => serverInfo.Name === server.Name);
-                   if (newServerInfo && newServerInfo.GameVersion != server.GameVersion) {
-                       server.GameVersion = newServerInfo.GameVersion;
-                   }
-                });
-            });
         }
     }
 
-    public closeApp(): void {
-        this.electronService.ipcRenderer.send('close');
-    }
-
-    async checkForUpdates(force?: false): Promise<void> {
+    async checkForUpdates(force?: boolean): Promise<void> {
         this.isGameLoading = true;
 
         this.resetLoadingProgress();
@@ -87,7 +92,7 @@ export class ShellComponent implements OnInit {
 
         const filesForDelete = [];
         const filesForUpdate = [];
-        const hashTableUrl = `${this.settingsService.settings.Host}/client/${this.selectedServer.Name}/hash_table.txt`;
+        const hashTableUrl = `${HOST_URL}/client/${this.selectedServer.Name}/hash_table.txt`;
 
         try {
             const localHashTable = await this.gameService.getLocalHashTable(this.selectedServer.Name);
@@ -117,18 +122,25 @@ export class ShellComponent implements OnInit {
         }
     }
 
+    changeGameFolder() {
+        this.electronService.ipcRenderer.invoke("change-game-folder").then((result) => {
+            if (result) {
+                this.userPreferenceService.gameFolder = result;
+            }
+        });
+    }
+
     updateGame(serverName: string, filesForDelete: string[], filesForUpdate: string[]): Promise<boolean> {
         return new Promise((resolve) => {
             this.gameService.deleteFiles(serverName, filesForDelete).then(() => {
                 const totalCount = filesForUpdate.length;
 
-                const subscription = this.gameService.downloadFiles(serverName, `${this.settingsService.settings.Host}/client/${serverName}`, filesForUpdate)
+                const subscription = this.gameService.downloadFiles(serverName, `${HOST_URL}/client/${serverName}`, filesForUpdate)
                     .pipe(finalize(() => {
                         this.isGameLoading = false;
-                        this.gameService.userPreference.ShouldVote = true;
+                        this.userPreferenceService.shouldVote = true;
 
                         this.resetLoadingProgress();
-                        this.gameService.updateUserPreference();
 
                         subscription.unsubscribe();
 
@@ -176,25 +188,42 @@ export class ShellComponent implements OnInit {
     }
 
     async startGame() {
-        if (this.selectedServer.VoteUrl && this.gameService.userPreference.ShouldVote) {
-            await this._dialogService.openDialog(VoteDialogComponent, this.selectedServer.VoteUrl);
+        this.isGameStarting = true;
 
-            this.gameService.userPreference.ShouldVote = false;
+        await this.showVoteDialog();
 
-            this.gameService.updateUserPreference();
-        }
+        this._changeDetectorRef.markForCheck();
 
         const isSteamRunning = await this.gameService.isSteamEnabled();
         if (!isSteamRunning) {
-            this._dialogService.showErrorDialog("Для игры на сервере, необходим запущенный стим с лицензионной игрой.");
+            const result = await this._dialogService.openDialog(SteamNotFoundDialog);
+            if (!result) {
+                this.isGameStarting = false;
+
+                return;
+            }
         }
 
-        await this.checkForUpdates();
+        this._changeDetectorRef.markForCheck();
 
         try {
+            await this.checkForUpdates();
+
             await this.gameService.startGame(this.selectedServer);
         } catch (error) {
-            this._dialogService.showErrorDialog("Ошибка при запуске игры.", error.message);
+            await this._dialogService.showErrorDialog("Ошибка при запуске игры.", error.message);
+
+            this._changeDetectorRef.markForCheck();
+        }
+
+        this.isGameStarting = false;
+    }
+
+    private async showVoteDialog(): Promise<void> {
+        if (this.selectedServer.VoteUrl && this.userPreferenceService.shouldVote) {
+            await this._dialogService.openDialog(VoteDialogComponent, this.selectedServer.VoteUrl);
+
+            this.userPreferenceService.shouldVote = false;
         }
     }
 

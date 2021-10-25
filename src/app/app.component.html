@@ -1,4 +1,18 @@
-<app-shell *ngIf="isDataReceived"></app-shell>
+<div *ngIf="isDataReceived" class="body-wrapper" [ngClass]="{ 'update': isUpdatePageVisible, 'loaded': isDataReceived }">
+    <div class="header">
+        <div class="drag-and-drop"></div>
+        <div class="app-menu">
+            <button mat-raised-button color="accent" *ngIf="isUpdateButtonVisible" (click)="updateLauncher()" class="update">Обновить лаунчер</button>
+            <button mat-icon-button (click)="closeApp()" class="close">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+    </div>
+    <div class="content">
+        <app-shell *ngIf="!isUpdatePageVisible"></app-shell>
+        <app-auto-update *ngIf="isUpdatePageVisible"></app-auto-update>
+    </div>
+</div>
 <span class="version" *ngIf="version">{{ version}} </span>
 <div class="logo" *ngIf="!isDataReceived">
     <img class="snake" src="assets/images/logo-snake.png" alt="">
