@@ -98,13 +98,13 @@ ipcMain.on('check-for-updates', async (event) => {
         result = null;
     }
 
-    if (!result) {
+    if (!result || result.updateInfo && result.updateInfo.version == autoUpdater.currentVersion.version) {
         browserWindow.webContents.send('check-for-updates-result', null);
 
         return;
     }
 
-    browserWindow.webContents.send('check-for-updates-result', JSON.stringify(result.updateInfo));
+    browserWindow.webContents.send('check-for-updates-result', JSON.stringify(result));
 });
 
 ipcMain.on('install-update', (event) => {
