@@ -10,13 +10,13 @@ export class DialogService {
     constructor(private _dialog: MatDialog) {
     }
 
-    showErrorDialog(message: string, critical?: string): Promise<void> {
+    showErrorDialog(message: string, critical?: string, title = "Ошибка"): Promise<void> {
         return new Promise<void>((resolve) => {
             this._dialog.closeAll();
 
             this._dialog.open(ErrorDialogComponent, {
                 data: {
-                    Title: 'Ошибка',
+                    Title: title,
                     Message: message,
                     Critical: critical
                 },

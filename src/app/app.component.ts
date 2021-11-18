@@ -37,8 +37,6 @@ export class AppComponent implements OnInit {
     }
 
     async ngOnInit() {
-        await this.checkAdminRights();
-
         await this._autoUpdateService.checkForUpdates();
 
         this.subscribeOnLogs();
@@ -73,16 +71,6 @@ export class AppComponent implements OnInit {
             this.version = data.version;
 
             console.log(`Version: ${JSON.stringify(this.version)}`);
-        });
-    }
-
-    private async checkAdminRights(): Promise<void> {
-        this._gameService.checkAdminRights().then((result) => {
-            if (!result) {
-                this._dialogService.showErrorDialog("Запустите лаунчер от имени администратора").then(() => {
-                    this._electronService.ipcRenderer.send('close');
-                });
-            }
         });
     }
 

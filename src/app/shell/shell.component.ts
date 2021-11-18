@@ -205,6 +205,13 @@ export class ShellComponent implements OnInit {
         try {
             await this.checkForUpdates();
 
+            const hasAdminRight = await this.gameService.checkAdminRights();
+            if (!hasAdminRight) {
+                await this._dialogService.showErrorDialog("Для запуска игры необходимо запустить лаунчер от имени администратора. Если сообщение повторяется вы можете запустить игру через valheim.exe файл в папке с игрой.", null, "Запустите лаунчер от имени администратора.");
+
+                return;
+            }
+
             await this.gameService.startGame(this.selectedServer);
         } catch (error) {
             await this._dialogService.showErrorDialog("Ошибка при запуске игры.", error.message);
