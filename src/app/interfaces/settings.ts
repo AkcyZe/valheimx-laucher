@@ -4,7 +4,8 @@ export interface Settings {
     Description: string;
     Servers: ServerData[];
     News: News[];
-    Contacts: Contacts
+    Contacts: Contacts;
+    VoteImg: string;
 }
 
 export interface Contacts {

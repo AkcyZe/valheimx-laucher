@@ -3,6 +3,7 @@ import { MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import { ErrorMessage } from '../../interfaces/error-message';
 import { ElectronService } from 'ngx-electron';
 import { Metrika } from 'ng-yandex-metrika';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
     selector: 'vote-dialog',
@@ -14,6 +15,7 @@ export class VoteDialogComponent {
         public dialogRef: MatDialogRef<VoteDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: string,
         private _electronService: ElectronService,
+        public settingsService: SettingsService,
         private _metrika: Metrika) {}
 
     public vote() {
