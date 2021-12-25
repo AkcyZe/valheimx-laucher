@@ -130,42 +130,9 @@ export class ShellComponent implements OnInit {
                 if (!this.isHashedEquals(existedLocalHashKey, originalHashKey)) {
                     console.log(`Updating invalid hash: ${originalHashKey.hash}:${originalHashKey.path}`);
 
-                    hashKeysToDelete.push(originalHashKey);
+                    hashKeysToDownload.push(originalHashKey);
                 }
             });
-
-
-            // originalHashTable.forEach(remoteHashKey => { // New Files
-            //     const equalsHashes = localHashTable.filter(localHashKey => this.isHashedEquals(localHashKey, remoteHashKey));
-            //     if (equalsHashes.length == 0) {
-            //         console.log(`File to download not existed: ${remoteHashKey.hash}:${remoteHashKey.path}`)
-            //
-            //         hashKeysToDownload.push(remoteHashKey);
-            //     } else {
-            //         if (!equalsHashes.find(equalHash => this.isPathsEquals(equalHash, remoteHashKey))) {
-            //             console.log(`File to download not existed by path: ${remoteHashKey.hash}:${remoteHashKey.path}`)
-            //
-            //             hashKeysToDownload.push(remoteHashKey);
-            //         }
-            //     }
-            // });
-            //
-            // localHashTable.forEach(localHashKey => {
-            //     const equalsHashes  = originalHashTable.filter(remoteHashKey => this.isHashedEquals(localHashKey, remoteHashKey))
-            //     if (equalsHashes.length == 0) {
-            //         console.log(`File to delete: ${localHashKey}:${localHashKey.path}`)
-            //
-            //         hashKeysToDelete.push(localHashKey);
-            //     } else {
-            //         equalsHashes.forEach(equalHash => {
-            //             if (!this.isPathsEquals(equalHash, localHashKey)) {
-            //                 console.log(`File to delete invalid path: ${localHashKey}:${localHashKey.path}`)
-            //
-            //                 hashKeysToDelete.push(localHashKey);
-            //             }
-            //         });
-            //     }
-            // });
 
             if (hashKeysToDelete.length || hashKeysToDownload.length) {
                 await this.updateGame(this.selectedServer.Name, hashKeysToDelete.map(hash => hash.path), hashKeysToDownload.map(hash => hash.path));
