@@ -6,6 +6,7 @@ export interface Settings {
     News: News[];
     Contacts: Contacts;
     VoteImg: string;
+    VoteMessage: string;
 }
 
 export interface Contacts {

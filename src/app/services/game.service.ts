@@ -162,8 +162,8 @@ export class GameService {
         this._electronService.ipcRenderer.send('openGameFolder', serverName);
     }
 
-    openLogFolder() {
-        this._electronService.ipcRenderer.send('openLogFolder');
+    openLogFolder(serverName: string) {
+        this._electronService.ipcRenderer.send('openLogFolder', serverName);
     }
 
     openDevMode() {

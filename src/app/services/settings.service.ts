@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ServerData, Settings } from '../interfaces/settings';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
+import { ElectronService } from 'ngx-electron';
 
 export const HOST_URL = 'http://185.189.255.227:9323';
 const SETTINGS_URL = 'http://185.189.255.227:9323/Launcher/Settings.json';
@@ -18,17 +19,14 @@ export class SettingsService {
 
     public serversListUpdated: Subject<ServerData[]> = new Subject<ServerData[]>();
 
-    private refreshInterval: NodeJS.Timeout;
-
     constructor(private _http: HttpClient,
-                private _sanitizer: DomSanitizer) {}
+                private _sanitizer: DomSanitizer,
+                private _electronService: ElectronService) {}
 
     async init(): Promise<void> {
         this.settings = await this.fetchSettings();
 
         this.handleServerList(this.settings);
-
-        this.startFetchingInterval();
     }
 
     private async fetchSettings(): Promise<Settings> {
@@ -41,15 +39,9 @@ export class SettingsService {
         });
     }
 
-    startFetchingInterval() {
-        if (!this.refreshInterval) {
-            this.refreshInterval = setInterval(async () => {
-                try {
-                    const settings = await this.fetchSettings();
-                    this.handleServerList(settings);
-                } catch (error) {}
-            }, 10000);
-        }
+    public async reloadSettings(): Promise<void> {
+        const settings = await this.fetchSettings();
+        this.handleServerList(settings);
     }
 
     private handleServerList(settings: Settings): void {

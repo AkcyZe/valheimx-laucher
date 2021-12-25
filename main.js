@@ -117,7 +117,7 @@ const copyFolderRecursiveSync = (source, target) => {
 }
 
 const getGameFolder = (serverName) => {
-    return path.join(gameFolderPath, serverName);
+    return path.join(gameFolderPath, serverName).replace(/\\/g, '/');
 }
 
 const createGameFolder = (serverName) => {
@@ -251,8 +251,6 @@ ipcMain.handle('getHashTable', async (event, serverName) => {
 
                    hashSum.update(fileBuffer);
 
-                   console.log(path.replace(`${getGameFolder(serverName)}/`, ""));
-
                    hashTable.push({
                        hash: hashSum.digest('hex').toUpperCase(),
                        path: path.replace(`${getGameFolder(serverName)}/`, "")
@@ -273,6 +271,10 @@ ipcMain.handle('getHashTable', async (event, serverName) => {
 ipcMain.handle('delete-file', async (e, serverName, path) => {
     return new Promise(async (resolve, reject) => {
        try {
+           path = `${getGameFolder(serverName)}/${path}`;
+
+           console.log(`Deleting: ${path}`);
+
            if (fs.existsSync(path)) {
                fs.unlinkSync(path);
            }
@@ -372,8 +374,8 @@ ipcMain.on('openGameFolder', (e, serverName) => {
     shell.openPath(getGameFolder(serverName));
 });
 
-ipcMain.on('openLogFolder', () => {
-    shell.openPath(path.join(process.env.APPDATA, '../Local/Temp/IronGate/Valheim/Crashes'));
+ipcMain.on('openLogFolder', (e, serverName) => {
+    shell.openExternal(path.join(getGameFolder(serverName), 'BepInEx/LogOutput.log'));
 });
 
 const isProcessRunning = (query, cb) => {

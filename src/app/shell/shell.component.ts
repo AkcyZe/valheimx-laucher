@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { GameService } from '../services/game.service';
+import { GameService, HashKey } from '../services/game.service';
 import { DialogService } from '../services/dialog.service';
 import { HOST_URL, SettingsService } from '../services/settings.service';
 import { Metrika } from 'ng-yandex-metrika';
@@ -82,6 +82,8 @@ export class ShellComponent implements OnInit {
     async checkForUpdates(force?: boolean): Promise<void> {
         this.isGameLoading = true;
 
+        await this.settingsService.reloadSettings();
+
         this.resetLoadingProgress();
 
         this.stepProgressMessage = "Проверка целостности клиента";
@@ -90,28 +92,83 @@ export class ShellComponent implements OnInit {
             await this.gameService.deleteAllFiles(this.selectedServer.Name);
         }
 
-        const filesForDelete = [];
-        const filesForUpdate = [];
+        const hashKeysToDelete: HashKey[] = [];
+        const hashKeysToDownload: HashKey[] = [];
         const hashTableUrl = `${HOST_URL}/client/${this.selectedServer.Name}/hash_table.txt`;
 
         try {
+            const originalHashTable = await this.gameService.getRemoteHashTable(hashTableUrl);
             const localHashTable = await this.gameService.getLocalHashTable(this.selectedServer.Name);
-            const remoteHashTable = await this.gameService.getRemoteHashTable(hashTableUrl);
 
-            remoteHashTable.forEach(remoteHashKey => { // New Files
-                if (!localHashTable.find(localHashKey => localHashKey.hash === remoteHashKey.hash)) {
-                    filesForUpdate.push(remoteHashKey.path);
+            localHashTable.forEach(localHashKey => {
+                const existedOriginalHashKey = originalHashTable.find(originalHashKey => this.isPathsEquals(originalHashKey, localHashKey));
+                if (!existedOriginalHashKey) {
+                    console.log(`Deleting not existed hash: ${localHashKey.hash}:${localHashKey.path}`);
+
+                    hashKeysToDelete.push(localHashKey);
+
+                    return;
+                }
+
+                if (!this.isHashedEquals(existedOriginalHashKey, localHashKey)) {
+                    console.log(`Deleting invalid hash: ${localHashKey.hash}:${localHashKey.path}`);
+
+                    hashKeysToDelete.push(localHashKey);
                 }
             });
 
-            localHashTable.forEach(localHashKey => { // Old Files
-                if (!remoteHashTable.find(remoteHashKey => remoteHashKey.hash === localHashKey.hash)) {
-                    filesForDelete.push(localHashKey.path);
+            originalHashTable.forEach(originalHashKey => {
+               const existedLocalHashKey = localHashTable.find(localHashKey => this.isPathsEquals(originalHashKey, localHashKey));
+                if (!existedLocalHashKey) {
+                    console.log(`Downloading not existed hash: ${originalHashKey.hash}:${originalHashKey.path}`);
+
+                    hashKeysToDownload.push(originalHashKey);
+
+                    return;
+                }
+
+                if (!this.isHashedEquals(existedLocalHashKey, originalHashKey)) {
+                    console.log(`Updating invalid hash: ${originalHashKey.hash}:${originalHashKey.path}`);
+
+                    hashKeysToDelete.push(originalHashKey);
                 }
             });
 
-            if (filesForDelete.length || filesForUpdate.length) {
-                await this.updateGame(this.selectedServer.Name, filesForDelete, filesForUpdate);
+
+            // originalHashTable.forEach(remoteHashKey => { // New Files
+            //     const equalsHashes = localHashTable.filter(localHashKey => this.isHashedEquals(localHashKey, remoteHashKey));
+            //     if (equalsHashes.length == 0) {
+            //         console.log(`File to download not existed: ${remoteHashKey.hash}:${remoteHashKey.path}`)
+            //
+            //         hashKeysToDownload.push(remoteHashKey);
+            //     } else {
+            //         if (!equalsHashes.find(equalHash => this.isPathsEquals(equalHash, remoteHashKey))) {
+            //             console.log(`File to download not existed by path: ${remoteHashKey.hash}:${remoteHashKey.path}`)
+            //
+            //             hashKeysToDownload.push(remoteHashKey);
+            //         }
+            //     }
+            // });
+            //
+            // localHashTable.forEach(localHashKey => {
+            //     const equalsHashes  = originalHashTable.filter(remoteHashKey => this.isHashedEquals(localHashKey, remoteHashKey))
+            //     if (equalsHashes.length == 0) {
+            //         console.log(`File to delete: ${localHashKey}:${localHashKey.path}`)
+            //
+            //         hashKeysToDelete.push(localHashKey);
+            //     } else {
+            //         equalsHashes.forEach(equalHash => {
+            //             if (!this.isPathsEquals(equalHash, localHashKey)) {
+            //                 console.log(`File to delete invalid path: ${localHashKey}:${localHashKey.path}`)
+            //
+            //                 hashKeysToDelete.push(localHashKey);
+            //             }
+            //         });
+            //     }
+            // });
+
+            if (hashKeysToDelete.length || hashKeysToDownload.length) {
+                await this.updateGame(this.selectedServer.Name, hashKeysToDelete.map(hash => hash.path), hashKeysToDownload.map(hash => hash.path));
             } else {
                 this.isGameLoading = false;
             }
@@ -120,6 +177,17 @@ export class ShellComponent implements OnInit {
 
             await this._dialogService.showErrorDialog(`Ошибка при проверке файлов игры.`, error.message);
         }
+    }
+
+    private isHashedEquals(original: HashKey, client: HashKey): boolean {
+        return original.hash === client.hash;
+    }
+
+    private isPathsEquals(original: HashKey, client: HashKey) {
+        const originalPath = original.path.replace(/\\/g, '/');
+        const clientPath = client.path.replace(/\\/g, '/');
+
+        return originalPath.trim() === clientPath.trim();
     }
 
     changeGameFolder() {
@@ -209,6 +277,8 @@ export class ShellComponent implements OnInit {
             if (!hasAdminRight) {
                 await this._dialogService.showErrorDialog("Для запуска игры необходимо запустить лаунчер от имени администратора. Если сообщение повторяется вы можете запустить игру через valheim.exe файл в папке с игрой.", null, "Запустите лаунчер от имени администратора.");
 
+                this.isGameStarting = false;
+
                 return;
             }
 
@@ -235,7 +305,7 @@ export class ShellComponent implements OnInit {
     }
 
     openLogFolder() {
-        this.gameService.openLogFolder();
+        this.gameService.openLogFolder(this.selectedServer.Name);
     }
 
     compilePercent(loaded: number, total: number, fileName?: string): number {

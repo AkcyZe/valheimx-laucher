@@ -1,10 +1,6 @@
 <h1 mat-dialog-title>Голосуй и получай бонусы!</h1>
 <div mat-dialog-content>
-    <span>Вы можете получить одну из наград в наборе за голоса (3 линии - 3 набора на картинке по 4 награды)<br><br>
-Также за каждый голос вы можете получить глаза грейдворфов, что бы зарядить оберег на 24 часа! (/votes buy Chargers)<br><br>
-В чате игры:<br>
-/votes stats - покажет баланс и доступные награды!<br>
-/votes buy название набора - получить случайную награду из набора!</span>
+    <div class="message" [innerHTML]="this.sanitized.bypassSecurityTrustHtml(settingsService.settings.VoteMessage)"></div>
     <img src="{{settingsService.settings.VoteImg}}" alt="">
 </div>
 <div mat-dialog-actions>
