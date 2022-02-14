@@ -24,7 +24,6 @@ export interface ServerData {
     Name: string;
     DisplayText: string
     Ip: string;
-    HashTableUrl: string;
     VoteUrl: string;
     TrackerUrl: string;
     TrustedTrackerUrl: SafeResourceUrl;

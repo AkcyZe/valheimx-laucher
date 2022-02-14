@@ -94,7 +94,7 @@ export class ShellComponent implements OnInit {
 
         const hashKeysToDelete: HashKey[] = [];
         const hashKeysToDownload: HashKey[] = [];
-        const hashTableUrl = `${HOST_URL}/client/${this.selectedServer.Name}/hash_table.txt`;
+        const hashTableUrl = `${HOST_URL}/${this.selectedServer.Name}/hash_table.txt`;
 
         try {
             const originalHashTable = await this.gameService.getRemoteHashTable(hashTableUrl);
@@ -166,7 +166,7 @@ export class ShellComponent implements OnInit {
             this.gameService.deleteFiles(serverName, filesForDelete).then(() => {
                 const totalCount = filesForUpdate.length;
 
-                const subscription = this.gameService.downloadFiles(serverName, `${HOST_URL}/client/${serverName}`, filesForUpdate)
+                const subscription = this.gameService.downloadFiles(serverName, `${HOST_URL}/${serverName}`, filesForUpdate)
                     .pipe(finalize(() => {
                         this.isGameLoading = false;
                         this.userPreferenceService.shouldVote = true;
