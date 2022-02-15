@@ -1,4 +1,4 @@
-<div class="content" *ngIf="settingsService">
+<div class="content" *ngIf="settingsService && settingsService.settings">
     <div class="project-description">
         <div class="about-us">
             <span class="title">Ragnarök</span>
@@ -21,7 +21,7 @@
         </div>
     </div>
 </div>
-<div class="footer">
+<div class="footer" *ngIf="settingsService && settingsService.settings">
     <div class="game-wrapper">
         <div class="loading-progress">
             <ng-container *ngIf="isGameLoading">

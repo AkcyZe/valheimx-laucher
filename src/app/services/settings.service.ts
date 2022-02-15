@@ -5,8 +5,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { ElectronService } from 'ngx-electron';
 
-export const HOST_URL = 'https://storage.yandexcloud.net/valheim-ragnarok';
-const SETTINGS_URL = 'https://storage.yandexcloud.net/valheim-ragnarok/Settings.json';
+export const HOST_URL = 'https://cdn.valheim-ragnarok-static.space/valheim-ragnarok';
+const SETTINGS_URL = `${HOST_URL}/Settings.json`;
 
 const fs = (window as any).require('fs');
 

@@ -25,6 +25,10 @@ export class AppComponent implements OnInit {
         return this._autoUpdateService.isUpdateAvailable && this._userPreferenceService.skipUpdate;
     }
 
+    public get isSettingsReceived(): boolean {
+        return this._settingsService.settings != null;
+    }
+
     constructor(
         private _settingsService: SettingsService,
         private _gameService: GameService,
@@ -37,24 +41,23 @@ export class AppComponent implements OnInit {
     }
 
     async ngOnInit() {
-        await this._autoUpdateService.checkForUpdates();
+        this._autoUpdateService.checkForUpdates().then(() => {
+
+        });
 
         this.subscribeOnLogs();
         this.subscribeOnVersion();
 
-        try {
-            await this._settingsService.init();
-        } catch (error) {
-            this._dialogService.showErrorDialog("Ошибка при загрузке настроек", error.message).then(() => {
-                this._electronService.ipcRenderer.send('close');
-            });
-        }
+        this._settingsService.init().then(() => {
+
+        }, error => {
+            this._dialogService.showErrorDialog("Ошибка при загрузке настроек", error.message).then(() => {});
+        });
 
         this.isDataReceived = true;
 
         this._metrics.hit("Ragnarok", { title: "Ragnarok" });
     }
-
 
     public updateLauncher() {
         this._autoUpdateService.update();
